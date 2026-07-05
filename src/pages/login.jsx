@@ -54,13 +54,24 @@ document.body.style.padding = '0';
           <div style={styles.dividerLine} />
           <p style={styles.leftCaption}>Sistema Integrado de Gestión de Historias Médicas</p>
           <div style={styles.leftBadges}>
-          <span style={styles.badge}>Archivo Clínico</span>
-           <span style={styles.badge}>Índice de Historias</span>
-          <span style={styles.badge}>Acceso Institucional</span>
-        </div>
+            <span style={styles.badge}>Archivo Clínico</span>
+            <span style={styles.badge}>Índice de Historias</span>
+            <span style={styles.badge}>Acceso Institucional</span>
+          </div>
         </div>
         <div style={styles.leftFooter}>
-          <p style={styles.footerText}>© 2026 NETSOLCA. Todos los derechos reservados. </p>
+          <p style={styles.footerText}>
+            © 2026{' '}
+            <a 
+              href="https://www.instagram.com/netsolca.ve" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={styles.footerLink}
+            >
+              NETSOLCA
+            </a>
+            . Todos los derechos reservados.
+          </p>
         </div>
       </div>
 
@@ -73,20 +84,14 @@ document.body.style.padding = '0';
           style={styles.formCard}
         >
           <div style={styles.logoSmall}>
-  <img
-    
-  src={logoIVSS}
-  alt="IVSS"
-  style={styles.logo}
-/>
-</div>
-            <div style={styles.formHeader}>
-  <h2 style={styles.formTitle}>Iniciar Sesión</h2>
-  <p style={styles.formSubtitle}>
-    Ingrese sus credenciales para acceder al sistema
-  </p>
-</div>
-            
+            <img src={logoIVSS} alt="IVSS" style={styles.logo} />
+          </div>
+          <div style={styles.formHeader}>
+            <h2 style={styles.formTitle}>Iniciar Sesión</h2>
+            <p style={styles.formSubtitle}>
+              Ingrese sus credenciales para acceder al sistema
+            </p>
+          </div>
 
           <form onSubmit={handleLogin} style={styles.form}>
             {error && (
@@ -215,46 +220,58 @@ leftTitle: {
   fontWeight: '800',
   margin: 0,
   letterSpacing: '6px',
-
+},
+leftSubtitle: {
+  color: 'white',
+  fontSize: '0.9rem',
+  margin: 0,
+  lineHeight: 1.5,
+  maxWidth: '280px',
+},
+dividerLine: {
+  width: '60px',
+  height: '2px',
+  background: 'rgba(255,255,255,0.4)',
+  borderRadius: '2px',
+  margin: '0.5rem 0',
+},
+leftCaption: {
+  color: 'white',
+  fontSize: '0.8rem',
+  maxWidth: '260px',
+  lineHeight: 1.6,
+  margin: 0,
+},
+leftBadges: {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '8px',
+  justifyContent: 'center',
+  marginTop: '1rem',
+},
+badge: {
+  background: 'rgba(255,255,255,0.12)',
+  color: 'white',
+  padding: '6px 14px',
+  borderRadius: '20px',
+  fontSize: '0.78rem',
+  border: '1px solid rgba(255,255,255,0.2)',
+},
+leftFooter: { textAlign: 'center' },
+footerText: { 
+  color: 'white', 
+  fontSize: '0.75rem', 
+  margin: 0 
+},
+footerLink: {
+  color: 'white',
+  textDecoration: 'none',
+  fontWeight: '700',
+  transition: 'opacity 0.2s',
+  '&:hover': {
+    opacity: 0.7,
   },
-  leftSubtitle: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: '0.9rem',
-    margin: 0,
-    lineHeight: 1.5,
-    maxWidth: '280px',
-  },
-  dividerLine: {
-    width: '60px',
-    height: '2px',
-    background: 'rgba(255,255,255,0.4)',
-    borderRadius: '2px',
-    margin: '0.5rem 0',
-  },
-  leftCaption: {
-    color: 'rgba(255,255,255,0.65)',
-    fontSize: '0.8rem',
-    maxWidth: '260px',
-    lineHeight: 1.6,
-    margin: 0,
-  },
-  leftBadges: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px',
-    justifyContent: 'center',
-    marginTop: '1rem',
-  },
-  badge: {
-    background: 'rgba(255,255,255,0.12)',
-    color: 'rgba(255,255,255,0.85)',
-    padding: '6px 14px',
-    borderRadius: '20px',
-    fontSize: '0.78rem',
-    border: '1px solid rgba(255,255,255,0.2)',
-  },
-  leftFooter: { textAlign: 'center' },
-  footerText: { color: 'rgba(255,255,255,0.45)', fontSize: '0.75rem', margin: 0 },
+},
 
   // Panel derecho
   rightPanel: {
