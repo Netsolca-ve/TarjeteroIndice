@@ -7,7 +7,9 @@ import {
   FiEdit2, FiX, FiSave, FiAlertCircle
 } from 'react-icons/fi';
 import fondoHospital from '../assets/fondo-ivss.png';
+import logoivssb from '../assets/logo-ivssb.png';
 import { supabase } from '../services/supabase';
+import logoIVSS from '../assets/logo-ivss.png';
 
 const ESPECIALIDADES = ['OBSTETRICIA', 'GINECOLOGÍA', 'CIRUGÍA GENERAL', 'MEDICINA INTERNA', 'TRAUMATOLOGÍA', 'PEDIATRÍA', 'CARDIOLOGÍA', 'NEUROLOGÍA'];
 
@@ -21,7 +23,7 @@ export default function DetallePaciente() {
   const [modalError, setModalError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Bloquear scroll cuando el modal está abierto
+  
   useEffect(() => {
     if (isEditModalOpen) {
       document.body.style.overflow = 'hidden';
@@ -37,7 +39,7 @@ export default function DetallePaciente() {
     };
   }, [isEditModalOpen]);
 
-  // Cargar paciente desde Supabase
+
   useEffect(() => {
     const fetchPaciente = async () => {
       const { data, error } = await supabase
@@ -54,11 +56,203 @@ export default function DetallePaciente() {
     fetchPaciente();
   }, [id]);
 
+  // =========================
+  // IMPRIMIR 
+  // =========================
   const handlePrint = () => {
-    window.print();
+    const logoURL = logoIVSS;
+
+    const contenido = `
+      <html>
+        <head>
+          <style>
+            /* RESET */
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: 'Segoe UI', Arial, sans-serif;
+              padding: 40px 30px;
+              max-width: 800px;
+              margin: 0 auto;
+              color: #1e293b;
+            }
+
+            /* HEADER CON LOGO A LA DERECHA */
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 3px solid #1e3a8a;
+              padding-bottom: 16px;
+              margin-bottom: 24px;
+            }
+
+            .header-left h1 {
+              font-size: 20px;
+              color: #1e3a8a;
+              margin: 0;
+              letter-spacing: 1px;
+            }
+            .header-left .sub {
+              font-size: 13px;
+              color: #475569;
+              margin-top: 2px;
+            }
+
+            .logo-container {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            }
+            .logo-container img {
+              width: 70px;
+              height: 70px;
+              object-fit: contain;
+            }
+
+            /* TÍTULO */
+            .titulo-impresion {
+              text-align: center;
+              font-size: 18px;
+              font-weight: 700;
+              color: #1e3a8a;
+              margin-bottom: 24px;
+              letter-spacing: 2px;
+              text-transform: uppercase;
+            }
+
+            /* CUADRO DE DATOS */
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px 30px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 10px;
+              padding: 24px 28px;
+            }
+
+            .info-item {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            .info-item.full {
+              grid-column: span 2;
+            }
+            .info-item .label {
+              font-size: 11px;
+              font-weight: 700;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .info-item .value {
+              font-size: 16px;
+              font-weight: 600;
+              color: #0f172a;
+            }
+
+            /* ESTADO */
+            .estado-activo {
+              color: #166534;
+              background: #dcfce7;
+              padding: 2px 12px;
+              border-radius: 20px;
+              display: inline-block;
+              font-size: 14px;
+            }
+            .estado-inactivo {
+              color: #92400e;
+              background: #fef3c7;
+              padding: 2px 12px;
+              border-radius: 20px;
+              display: inline-block;
+              font-size: 14px;
+            }
+
+            /* FOOTER */
+            .footer {
+              margin-top: 32px;
+              font-size: 11px;
+              color: #94a3b8;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 16px;
+            }
+            .footer a {
+              color: #1e3a8a;
+              text-decoration: none;
+              font-weight: 700;
+            }
+
+            @media print {
+              body { padding: 30px 20px; }
+              .no-print { display: none !important; }
+            }
+          </style>
+        </head>
+        <body>
+          <!-- HEADER con logo a la derecha -->
+          <div class="header">
+            <div class="header-left">
+              <h1>IVSS - Hospital Dr. Adolfo Pons</h1>
+              <div class="sub">Sistema de Historias Médicas</div>
+            </div>
+            <div class="logo-container">
+              <img src="${logoURL}" alt="IVSS Logo" />
+            </div>
+          </div>
+
+          <!-- TÍTULO -->
+          <div class="titulo-impresion"> Historias Médicas</div>
+
+          <!-- DATOS DEL PACIENTE -->
+          <div class="info-grid">
+            <div class="info-item full">
+              <span class="label">Nombres completos</span>
+              <span class="value">${paciente.nombres} ${paciente.apellidos}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Cédula</span>
+              <span class="value">${paciente.cedula}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Número de Historia</span>
+              <span class="value">${paciente.numero_historia}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Especialidad</span>
+              <span class="value">${paciente.especialidad}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Fecha de Nacimiento</span>
+              <span class="value">${paciente.fecha_nacimiento}</span>
+            </div>
+
+           
+          <!-- FOOTER - CENTRADO -->
+<div class="footer" style="text-align: center !important; width: 100%; display: block;">
+  © 2026 NETSOLCA    Fecha de impresión: ${new Date().toLocaleDateString('es-VE')}
+</div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    const win = window.open('', '_blank');
+    win.document.write(contenido);
+    win.document.close();
   };
 
-  // Abrir modal de edición
+  
   const handleOpenEdit = () => {
     if (paciente) {
       setEditData({
@@ -223,7 +417,7 @@ export default function DetallePaciente() {
         </div>
       </motion.div>
 
-      {/* MODAL EDITAR */}
+      {/* MODAL EDITAR  */}
       {isEditModalOpen && editData && (
         <div style={styles.overlay}>
           <motion.div
@@ -320,10 +514,6 @@ export default function DetallePaciente() {
                 </div>
               </div>
               <div style={styles.modalFooter}>
-                <button style={styles.btnCancel} onClick={() => {
-                  setIsEditModalOpen(false);
-                  setModalError('');
-                }}>CANCELAR</button>
                 <button style={styles.btnSave} onClick={handleGuardarEdicion}>
                   <FiSave style={{ marginRight: '6px' }} /> GUARDAR CAMBIOS
                 </button>
@@ -345,8 +535,8 @@ const styles = {
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundAttachment: 'fixed',
-    overflow: 'hidden', // ← SIN SCROLL
-    position: 'fixed', // ← FIJADO PARA QUE NO HAGA SCROLL
+    overflow: 'hidden',
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
@@ -385,8 +575,8 @@ const styles = {
     padding: '2.5rem',
     borderRadius: '12px',
     boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-    maxHeight: 'calc(100vh - 140px)', // ← ALTURA MÁXIMA SIN SCROLL
-    overflow: 'hidden', // ← SIN SCROLL
+    maxHeight: 'calc(100vh - 140px)',
+    overflow: 'hidden',
   },
   headerCard: {
     display: 'flex',
@@ -515,20 +705,9 @@ const styles = {
   modalFooter: {
     display: 'flex',
     justifyContent: 'flex-end',
-    gap: '10px',
     marginTop: '24px',
     paddingTop: '16px',
     borderTop: '1px solid #f3f4f6',
-  },
-  btnCancel: {
-    background: '#9ca3af',
-    color: 'white',
-    border: 'none',
-    padding: '10px 22px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: '600',
-    fontSize: '0.85rem',
   },
   btnSave: {
     background: '#1e3a8a',
