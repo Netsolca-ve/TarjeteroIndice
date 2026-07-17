@@ -9,10 +9,11 @@ import {
 } from 'react-icons/fi';
 import fondoHospital from '../assets/fondo-ivss.png';
 import logoivssb from '../assets/logo-ivssb.png';
+import logoIVSS from '../assets/logo-ivss.png';
 import { supabase } from '../services/supabase';
 
 const ESPECIALIDADES = ['OBSTETRICIA', 'GINECOLOGÍA', 'CIRUGÍA GENERAL', 'MEDICINA INTERNA', 'TRAUMATOLOGÍA', 'PEDIATRÍA', 'CARDIOLOGÍA', 'NEUROLOGÍA'];
-const ITEMS_POR_PAGINA = 10;
+const ITEMS_POR_PAGINA = 5;
 const CACHE_TIEMPO = 300000;
 
 const emptyForm = {
@@ -29,7 +30,7 @@ const emptyForm = {
 // FUNCIONES DE VALIDACIÓN
 // ============================================
 
-// Validar cédula: solo números
+// Validar cédula
 const validarCedula = (cedula) => {
   const cedulaLimpia = cedula.replace(/\D/g, '');
   if (!cedulaLimpia || cedulaLimpia.length < 7) {
@@ -74,7 +75,7 @@ const validarApellidos = (texto) => {
   return null;
 };
 
-// Validar número de historia: solo números, guiones y puntos
+// Validar número de historia
 const validarHistoria = (texto) => {
   if (!texto || texto.trim() === '') {
     return 'El número de historia es obligatorio';
@@ -144,7 +145,7 @@ export default function Dashboard() {
 });
 
 // =========================
-// BLOQUEAR SCROLL CUANDO EL MODAL ESTÁ ABIERTO
+// BLOQUEAR SCROLL
 // =========================
 useEffect(() => {
   if (isModalOpen || isEditModalOpen) {
@@ -216,11 +217,19 @@ useEffect(() => {
   // =========================
   // BUSCAR POR CÉDULA 
   // =========================
-  const buscarPorCedula = useCallback(async (cedula) => {
+  const buscarPorCedula = useCallback(async (cedula, esEnter = false) => {
     const cedulaLimpia = cedula.replace(/\D/g, '');
     
-    if (!cedulaLimpia || cedulaLimpia.length < 7) {
-      setFormError('Ingrese al menos 7 dígitos de la cédula');
+    // Si el campo está vacío, recargar todos los pacientes
+    if (!cedulaLimpia || cedulaLimpia.length === 0) {
+      setFormError('');
+      await cargarPacientes(pagina);
+      return;
+    }
+
+    // Si tiene menos de 3 dígitos, no buscar (para no saturar)
+    if (cedulaLimpia.length < 3) {
+      setFormError('Ingrese al menos 3 dígitos para buscar');
       return;
     }
 
@@ -229,20 +238,50 @@ useEffect(() => {
       setFormError('');
       setErrorGlobal('');
       
+      
+      if (esEnter) {
+        const { data, error } = await supabase
+          .from('pacientes')
+          .select('*')
+          .eq('cedula', cedulaLimpia)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          // Abrir detalle del paciente
+          navigate(`/paciente/${data.numero_historia}`);
+          setCedulaBusqueda('');
+          setFormError('');
+          setCargando(false);
+          return;
+        } else {
+          setFormError('No se encontró ningún paciente con esa cédula');
+          setPacientes([]);
+          setTotalPacientes(0);
+          setCargando(false);
+          return;
+        }
+      }
+
+      // SI NO ES ENTER: Búsqueda en tiempo real 
       const { data, error } = await supabase
         .from('pacientes')
         .select('*')
-        .eq('cedula', cedulaLimpia)
-        .maybeSingle();
+        .ilike('cedula', `${cedulaLimpia}%`)
+        .order('id_paciente', { ascending: false })
+        .limit(20);
 
       if (error) throw error;
 
-      if (data) {
-        navigate(`/paciente/${data.numero_historia}`);
+      if (data && data.length > 0) {
+        setPacientes(data);
+        setTotalPacientes(data.length);
+        setFormError('');
       } else {
-        setFormError('No se encontró ningún paciente con esa cédula');
         setPacientes([]);
         setTotalPacientes(0);
+        setFormError('No se encontraron pacientes con esa cédula');
       }
     } catch (error) {
       console.error('Error en búsqueda:', error);
@@ -250,7 +289,7 @@ useEffect(() => {
     } finally {
       setCargando(false);
     }
-  }, [navigate]);
+  }, [cargarPacientes, pagina, navigate]);
 
   // =========================
   // MEMOIZAR DATOS PARA RENDIMIENTO
@@ -431,22 +470,201 @@ useEffect(() => {
   // =========================
   // IMPRIMIR HISTORIA
   // =========================
-  const handleImprimir = useCallback((p) => {
+  const handlePrint = useCallback((p) => {
+    const logoURL = logoIVSS;
+
     const contenido = `
-      IVSS - Hospital Dr. Adolfo Pons
-      ================================
-      Historia Médica N°: ${p.numero_historia}
-      Paciente: ${p.nombres} ${p.apellidos}
-      Cédula: ${p.cedula}
-      Fecha de Nac.: ${p.fecha_nacimiento}
-      Especialidad: ${p.especialidad}
-      Estado: ${p.estado}
-      Fecha de impresión: ${new Date().toLocaleDateString('es-VE')}
+      <html>
+        <head>
+          <style>
+            /* RESET */
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: 'Segoe UI', Arial, sans-serif;
+              padding: 40px 30px;
+              max-width: 800px;
+              margin: 0 auto;
+              color: #1e293b;
+            }
+
+            /* HEADER CON LOGO A LA DERECHA */
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 3px solid #1e3a8a;
+              padding-bottom: 16px;
+              margin-bottom: 24px;
+            }
+
+            .header-left h1 {
+              font-size: 20px;
+              color: #1e3a8a;
+              margin: 0;
+              letter-spacing: 1px;
+            }
+            .header-left .sub {
+              font-size: 13px;
+              color: #475569;
+              margin-top: 2px;
+            }
+
+            .logo-container {
+              display: flex;
+              align-items: center;
+              gap: 10px;
+            }
+            .logo-container img {
+              width: 70px;
+              height: 70px;
+              object-fit: contain;
+            }
+
+            /* TÍTULO */
+            .titulo-impresion {
+              text-align: center;
+              font-size: 18px;
+              font-weight: 700;
+              color: #1e3a8a;
+              margin-bottom: 24px;
+              letter-spacing: 2px;
+              text-transform: uppercase;
+            }
+
+            /* CUADRO DE DATOS */
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px 30px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 10px;
+              padding: 24px 28px;
+            }
+
+            .info-item {
+              display: flex;
+              flex-direction: column;
+              gap: 2px;
+            }
+            .info-item.full {
+              grid-column: span 2;
+            }
+            .info-item .label {
+              font-size: 11px;
+              font-weight: 700;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .info-item .value {
+              font-size: 16px;
+              font-weight: 600;
+              color: #0f172a;
+            }
+
+            /* ESTADO */
+            .estado-activo {
+              color: #166534;
+              background: #dcfce7;
+              padding: 2px 12px;
+              border-radius: 20px;
+              display: inline-block;
+              font-size: 14px;
+            }
+            .estado-inactivo {
+              color: #92400e;
+              background: #fef3c7;
+              padding: 2px 12px;
+              border-radius: 20px;
+              display: inline-block;
+              font-size: 14px;
+            }
+
+            /* FOOTER - CENTRADO */
+            .footer {
+              margin-top: 32px;
+              text-align: center !important;
+              font-size: 11px;
+              color: #94a3b8;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 16px;
+              width: 100%;
+              display: block;
+            }
+            .footer a {
+              color: #1e3a8a;
+              text-decoration: none;
+              font-weight: 700;
+            }
+
+            @media print {
+              body { padding: 30px 20px; }
+              .no-print { display: none !important; }
+            }
+          </style>
+        </head>
+        <body>
+          <!-- HEADER con logo a la derecha -->
+          <div class="header">
+            <div class="header-left">
+              <h1>IVSS - Hospital Dr. Adolfo Pons</h1>
+              <div class="sub">Sistema de Historias Médicas</div>
+            </div>
+            <div class="logo-container">
+              <img src="${logoURL}" alt="IVSS Logo" />
+            </div>
+          </div>
+
+          <!-- TÍTULO -->
+          <div class="titulo-impresion"> Historias Médicas</div>
+
+          <!-- DATOS DEL PACIENTE -->
+          <div class="info-grid">
+            <div class="info-item full">
+              <span class="label">Nombres completos</span>
+              <span class="value">${p.nombres} ${p.apellidos}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Cédula</span>
+              <span class="value">${p.cedula}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Número de Historia</span>
+              <span class="value">${p.numero_historia}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Especialidad</span>
+              <span class="value">${p.especialidad}</span>
+            </div>
+
+            <div class="info-item">
+              <span class="label">Fecha de Nacimiento</span>
+              <span class="value">${p.fecha_nacimiento}</span>
+            </div>
+
+            
+
+          <!-- FOOTER - CENTRADO -->
+          <div class="footer">
+            © 2026 NETSOLCA    Fecha de impresión: ${new Date().toLocaleDateString('es-VE')}
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
     `;
+
     const win = window.open('', '_blank');
-    win.document.write(`<pre style="font-family:monospace;padding:2rem;font-size:1rem">${contenido}</pre>`);
-    win.print();
-    win.close();
+    win.document.write(contenido);
+    win.document.close();
   }, []);
 
   // =========================
@@ -480,14 +698,14 @@ useEffect(() => {
             <button style={{ ...styles.actionBtn, color: '#0369a1' }} title="Editar" onClick={() => handleOpenEdit(paciente)}>
               <FiEdit2 />
             </button>
-            <button style={{ ...styles.actionBtn, color: '#059669' }} title="Imprimir" onClick={() => handleImprimir(paciente)}>
+            <button style={{ ...styles.actionBtn, color: '#059669' }} title="Imprimir" onClick={() => handlePrint(paciente)}>
               <FiPrinter />
             </button>
           </div>
         </td>
       </motion.tr>
     ));
-  }, [navigate, handleOpenEdit, handleImprimir]);
+  }, [navigate, handleOpenEdit, handlePrint]);
 
   return (
     <div style={styles.container}>
@@ -565,18 +783,19 @@ useEffect(() => {
                 style={styles.input}
                 value={cedulaBusqueda}
                 onChange={(e) => {
-                  setCedulaBusqueda(e.target.value);
+                  const valor = e.target.value;
+                  setCedulaBusqueda(valor);
                   setFormError('');
-                  if (e.target.value.trim() === '') {
-                    cargarPacientes(pagina);
-                  }
+                  // FILTRADO EN TIEMPO REAL 
+                  buscarPorCedula(valor, false);
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    buscarPorCedula(cedulaBusqueda);
+                    e.preventDefault();
+                    // 
+                    buscarPorCedula(cedulaBusqueda, true);
                   }
                 }}
-                disabled={cargando}
               />
               {cedulaBusqueda && (
                 <button style={styles.clearBtn} onClick={() => {
@@ -588,23 +807,26 @@ useEffect(() => {
                 </button>
               )}
             </div>
-            <button 
-              style={styles.btnBuscar} 
-              onClick={() => buscarPorCedula(cedulaBusqueda)}
-              disabled={cargando}
-            >
-              {cargando ? 'Buscando...' : 'Buscar'}
-            </button>
-            <button style={styles.btnPrimary} onClick={() => { 
-              setFormData(emptyForm); 
-              setFormError(''); 
-              setModalError('');
-              setIsModalOpen(true); 
-            }}>
-              Registrar Nuevo Paciente
-            </button>
+            <div style={styles.searchButtons}>
+              <button 
+                style={styles.btnBuscar} 
+                onClick={() => {
+                  buscarPorCedula(cedulaBusqueda, true);
+                }}
+              >
+                Buscar
+              </button>
+              <button style={styles.btnPrimary} onClick={() => { 
+                setFormData(emptyForm); 
+                setFormError(''); 
+                setModalError('');
+                setIsModalOpen(true); 
+              }}>
+                Registrar Nuevo Paciente
+              </button>
+            </div>
           </div>
-          {cargando && <p style={styles.loadingText}>Cargando...</p>}
+          {formError && <p style={styles.errorText}>{formError}</p>}
         </motion.div>
 
         {/* TABLA */}
@@ -630,7 +852,7 @@ useEffect(() => {
                   <tr>
                     <td colSpan={6} style={styles.emptyCell}>
                       <FiUsers style={{ fontSize: '2rem', color: '#d1d5db', display: 'block', margin: '0 auto 8px' }} />
-                      {cargando ? 'Cargando pacientes...' : 'No se encontraron pacientes'}
+                      No se encontraron pacientes
                     </td>
                   </tr>
                 ) : (
@@ -644,11 +866,11 @@ useEffect(() => {
           {totalPaginas > 1 && (
             <div style={styles.pagination}>
               <button 
-                style={styles.pageBtn} 
+                style={{ ...styles.pageBtn, ...styles.pageBtnText }} 
                 disabled={pagina === 1 || cargando} 
                 onClick={() => cambiarPagina(pagina - 1)}
               >
-                <FiChevronLeft />
+                <FiChevronLeft style={{ marginRight: '4px' }} /> 
               </button>
               
               {Array.from({ length: Math.min(totalPaginas, 5) }, (_, i) => {
@@ -676,11 +898,11 @@ useEffect(() => {
               })}
               
               <button 
-                style={styles.pageBtn} 
+                style={{ ...styles.pageBtn, ...styles.pageBtnText }} 
                 disabled={pagina === totalPaginas || cargando} 
                 onClick={() => cambiarPagina(pagina + 1)}
               >
-                <FiChevronRight />
+                <FiChevronRight style={{ marginLeft: '4px' }} />
               </button>
               <span style={styles.pageInfo}>
                 Página {pagina} de {totalPaginas}
@@ -743,18 +965,18 @@ useEffect(() => {
         )}
       </AnimatePresence>
 
-   {/* FOOTER */}
-<footer style={styles.footer}>
-   © <a 
-      href="https://www.instagram.com/netsolca.ve" 
-      target="_blank" 
-      rel="noopener noreferrer"
-      style={styles.footerLink}
-    >
-      NETSOLCA
-    </a> 2026 |
-  Todos los derechos reservados.
-</footer>
+      {/* FOOTER */}
+      <footer style={styles.footer}>
+        © <a 
+          href="https://www.instagram.com/netsolca.ve" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={styles.footerLink}
+        >
+          NETSOLCA
+        </a> 2026 |
+        Todos los derechos reservados.
+      </footer>
     </div>
   );
 }
@@ -853,21 +1075,21 @@ const styles = {
     objectFit: 'contain',
     filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))',
   },
-container: {
-  fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
-  minHeight: '100vh',
-  width: '100%', // 
-  maxWidth: '100%', // 
-  paddingBottom: '50px',
-  backgroundImage: `linear-gradient(rgba(240, 245, 255, 0.88), rgba(240, 245, 255, 0.88)), url(${fondoHospital})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundAttachment: 'fixed',
-  display: 'block',
-  margin: 0,
-  overflowX: 'hidden', // 
-  overflowY: 'auto', // <
-},
+  container: {
+    fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+    minHeight: '100vh',
+    width: '100%',
+    maxWidth: '100%',
+    paddingBottom: '50px',
+    backgroundImage: `linear-gradient(rgba(240, 245, 255, 0.88), rgba(240, 245, 255, 0.88)), url(${fondoHospital})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    display: 'block',
+    margin: 0,
+    overflowX: 'hidden',
+    overflowY: 'auto',
+  },
   header: {
     background: 'linear-gradient(90deg, #0f2460 0%, #1e3a8a 60%, #1e40af 100%)',
     color: 'white',
@@ -943,8 +1165,26 @@ container: {
   cardTitle: { margin: '0 0 1rem 0', color: '#1e3a8a', fontSize: '1rem', fontWeight: '700', letterSpacing: '0.5px' },
   tableHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' },
   totalRegistros: { fontSize: '0.85rem', color: '#6b7280' },
-  searchRow: { display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' },
-  searchInputWrapper: { position: 'relative', display: 'flex', alignItems: 'center', flex: 1, maxWidth: '480px' },
+  searchRow: { 
+    display: 'flex', 
+    gap: '10px', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    flexWrap: 'wrap' 
+  },
+  searchInputWrapper: { 
+    position: 'relative', 
+    display: 'flex', 
+    alignItems: 'center', 
+    flex: 1, 
+    maxWidth: '480px',
+    minWidth: '200px',
+  },
+  searchButtons: {
+    display: 'flex',
+    gap: '10px',
+    flexShrink: 0,
+  },
   searchIcon: { position: 'absolute', left: '14px', color: '#9ca3af' },
   clearBtn: { position: 'absolute', right: '12px', background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', display: 'flex', alignItems: 'center' },
   input: {
@@ -964,9 +1204,21 @@ container: {
     padding: '10px 20px', borderRadius: '8px', cursor: 'pointer',
     fontWeight: '600', fontSize: '0.85rem', whiteSpace: 'nowrap',
   },
-  tableWrapper: { overflowX: 'auto' },
+  tableWrapper: {
+    overflowX: 'auto',
+    maxHeight: '400px',
+    overflowY: 'auto',
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb',
+  },
   table: { width: '100%', borderCollapse: 'collapse' },
-  trHead: { background: '#f1f5f9', textAlign: 'left' },
+  trHead: {
+    background: '#f1f5f9',
+    textAlign: 'left',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+  },
   th: { padding: '12px 14px', fontSize: '0.78rem', fontWeight: '700', color: '#374151', letterSpacing: '0.5px', whiteSpace: 'nowrap' },
   trBody: { borderBottom: '1px solid #f3f4f6', background: 'white', transition: 'background 0.15s' },
   td: { padding: '12px 14px', fontSize: '0.9rem', color: '#374151' },
@@ -984,6 +1236,11 @@ container: {
   pagination: { display: 'flex', alignItems: 'center', gap: '6px', marginTop: '1rem', justifyContent: 'flex-end', flexWrap: 'wrap' },
   pageBtn: { background: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center' },
   pageBtnActive: { background: '#1e3a8a', color: 'white', borderColor: '#1e3a8a' },
+  pageBtnText: {
+    padding: '6px 14px',
+    fontWeight: '600',
+    gap: '4px',
+  },
   pageInfo: { color: '#9ca3af', fontSize: '0.78rem', marginLeft: '8px' },
 
   // Modals
@@ -1002,27 +1259,27 @@ container: {
   btnSave: { background: '#1e3a8a', color: 'white', border: 'none', padding: '10px 22px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' },
   errorBox: { background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', marginBottom: '1rem' },
   footer: {
-  position: 'fixed',
-  bottom: 0,
-  left: 0,
-  width: '100%',
-  background: '#0f2460',
-  color: '#ffffff',
-  textAlign: 'center',
-  padding: '10px',
-  fontSize: '0.8rem',
-  fontWeight: '500',
-  zIndex: 999,
-  boxShadow: '0 -2px 8px rgba(0,0,0,0.15)',
-},
-footerLink: {
-  color: '#ffffff',
-  textDecoration: 'none',
-  fontWeight: '700',
-  transition: 'opacity 0.2s',
-  cursor: 'pointer',
-  '&:hover': {
-    opacity: 0.7,
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    background: '#0f2460',
+    color: '#ffffff',
+    textAlign: 'center',
+    padding: '10px',
+    fontSize: '0.8rem',
+    fontWeight: '500',
+    zIndex: 999,
+    boxShadow: '0 -2px 8px rgba(0,0,0,0.15)',
   },
-},
+  footerLink: {
+    color: '#ffffff',
+    textDecoration: 'none',
+    fontWeight: '700',
+    transition: 'opacity 0.2s',
+    cursor: 'pointer',
+    '&:hover': {
+      opacity: 0.7,
+    },
+  },
 };
