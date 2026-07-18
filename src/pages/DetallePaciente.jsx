@@ -195,7 +195,7 @@ export default function DetallePaciente() {
           <div class="header">
             <div class="header-left">
               <h1>IVSS - Hospital Dr. Adolfo Pons</h1>
-              <div class="sub">Sistema de Historias Médicas</div>
+              <div class="sub">Sistema de Historias Medicas</div>
             </div>
             <div class="logo-container">
               <img src="${logoURL}" alt="IVSS Logo" />
@@ -203,7 +203,7 @@ export default function DetallePaciente() {
           </div>
 
           <!-- TÍTULO -->
-          <div class="titulo-impresion"> Historias Médicas</div>
+          <div class="titulo-impresion"> Historias Medicas</div>
 
           <!-- DATOS DEL PACIENTE -->
           <div class="info-grid">
@@ -213,12 +213,12 @@ export default function DetallePaciente() {
             </div>
 
             <div class="info-item">
-              <span class="label">Cédula</span>
+              <span class="label">Cedula</span>
               <span class="value">${paciente.cedula}</span>
             </div>
 
             <div class="info-item">
-              <span class="label">Número de Historia</span>
+              <span class="label">Numero de Historia</span>
               <span class="value">${paciente.numero_historia}</span>
             </div>
 
@@ -233,9 +233,13 @@ export default function DetallePaciente() {
             </div>
 
            
-          <!-- FOOTER - CENTRADO -->
-<div class="footer" style="text-align: center !important; width: 100%; display: block;">
-  © 2026 NETSOLCA    Fecha de impresión: ${new Date().toLocaleDateString('es-VE')}
+         
+         <!-- FOOTER CENTRADO DENTRO DEL info-grid -->
+  <div class="info-item full" style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 8px;">
+    <span style="font-size: 11px; color: #94a3b8; display: block; width: 100%; text-align: center;">
+      © 2026 NETSOLCA    Fecha de impresión: ${new Date().toLocaleDateString('es-VE')}
+    </span>
+  </div>
 </div>
 
           <script>

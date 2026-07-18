@@ -13,8 +13,8 @@ import logoIVSS from '../assets/logo-ivss.png';
 import { supabase } from '../services/supabase';
 
 const ESPECIALIDADES = ['OBSTETRICIA', 'GINECOLOGÍA', 'CIRUGÍA GENERAL', 'MEDICINA INTERNA', 'TRAUMATOLOGÍA', 'PEDIATRÍA', 'CARDIOLOGÍA', 'NEUROLOGÍA'];
-const ITEMS_POR_PAGINA = 5;
-const CACHE_TIEMPO = 300000;
+const ITEMS_POR_PAGINA = 10;
+const CACHE_TIEMPO = 300000000;
 
 const emptyForm = {
   cedula: '',
@@ -34,13 +34,13 @@ const emptyForm = {
 const validarCedula = (cedula) => {
   const cedulaLimpia = cedula.replace(/\D/g, '');
   if (!cedulaLimpia || cedulaLimpia.length < 7) {
-    return 'La cédula debe tener al menos 7 dígitos';
+    return 'La cedula debe tener al menos 7 dígitos';
   }
   if (cedulaLimpia.length > 10) {
-    return 'La cédula no puede tener más de 10 dígitos';
+    return 'La cedula no puede tener más de 10 dígitos';
   }
   if (cedula !== cedulaLimpia) {
-    return 'La cédula solo debe contener números';
+    return 'La cedula solo debe contener números';
   }
   return null;
 };
@@ -361,7 +361,7 @@ useEffect(() => {
         .maybeSingle();
 
       if (existe) {
-        setModalError('Ya existe un paciente registrado con esa cédula');
+        setModalError('Ya existe un paciente registrado con esa cedula');
         return;
       }
 
@@ -373,7 +373,7 @@ useEffect(() => {
         .maybeSingle();
 
       if (existeHistoria) {
-        setModalError('Ya existe un paciente con ese número de historia');
+        setModalError('Ya existe un paciente con ese numero de historia');
         return;
       }
 
@@ -609,7 +609,7 @@ useEffect(() => {
           <div class="header">
             <div class="header-left">
               <h1>IVSS - Hospital Dr. Adolfo Pons</h1>
-              <div class="sub">Sistema de Historias Médicas</div>
+              <div class="sub">Sistema de Historias Medicas</div>
             </div>
             <div class="logo-container">
               <img src="${logoURL}" alt="IVSS Logo" />
@@ -617,7 +617,7 @@ useEffect(() => {
           </div>
 
           <!-- TÍTULO -->
-          <div class="titulo-impresion"> Historias Médicas</div>
+          <div class="titulo-impresion"> Historias Medicas</div>
 
           <!-- DATOS DEL PACIENTE -->
           <div class="info-grid">
@@ -627,12 +627,12 @@ useEffect(() => {
             </div>
 
             <div class="info-item">
-              <span class="label">Cédula</span>
+              <span class="label">Cedula</span>
               <span class="value">${p.cedula}</span>
             </div>
 
             <div class="info-item">
-              <span class="label">Número de Historia</span>
+              <span class="label">Numero de Historia</span>
               <span class="value">${p.numero_historia}</span>
             </div>
 
@@ -645,13 +645,15 @@ useEffect(() => {
               <span class="label">Fecha de Nacimiento</span>
               <span class="value">${p.fecha_nacimiento}</span>
             </div>
-
             
 
-          <!-- FOOTER - CENTRADO -->
-          <div class="footer">
-            © 2026 NETSOLCA    Fecha de impresión: ${new Date().toLocaleDateString('es-VE')}
-          </div>
+         <!-- FOOTER  -->
+  <div class="info-item full" style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 8px;">
+    <span style="font-size: 11px; color: #94a3b8; display: block; width: 100%; text-align: center;">
+      © 2026 NETSOLCA    Fecha de impresión: ${new Date().toLocaleDateString('es-VE')}
+    </span>
+  </div>
+</div>
 
           <script>
             window.onload = function() {
@@ -773,13 +775,13 @@ useEffect(() => {
 
         {/* BÚSQUEDA */}
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={styles.card}>
-          <h2 style={styles.cardTitle}>BÚSQUEDA Y GESTIÓN DE PACIENTES</h2>
+          <h2 style={styles.cardTitle}>BUSQUEDA Y GESTIÓN DE PACIENTES</h2>
           <div style={styles.searchRow}>
             <div style={styles.searchInputWrapper}>
               <FiSearch style={styles.searchIcon} />
               <input
                 type="text"
-                placeholder="Buscar por cédula..."
+                placeholder="Buscar por cedula..."
                 style={styles.input}
                 value={cedulaBusqueda}
                 onChange={(e) => {
@@ -1055,7 +1057,7 @@ function ModalForm({ title, data, setData, error, onClose, onSave, isEdit }) {
           </div>
         )}
         <div style={styles.modalFooter}>
-          <button style={styles.btnCancel} onClick={onClose}>CANCELAR</button>
+   
           <button style={styles.btnSave} onClick={onSave}>
             {isEdit ? 'GUARDAR CAMBIOS' : 'GUARDAR REGISTRO'}
           </button>
@@ -1080,7 +1082,7 @@ const styles = {
     minHeight: '100vh',
     width: '100%',
     maxWidth: '100%',
-    paddingBottom: '50px',
+    paddingBottom: '60px',
     backgroundImage: `linear-gradient(rgba(240, 245, 255, 0.88), rgba(240, 245, 255, 0.88)), url(${fondoHospital})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
@@ -1206,8 +1208,6 @@ const styles = {
   },
   tableWrapper: {
     overflowX: 'auto',
-    maxHeight: '400px',
-    overflowY: 'auto',
     borderRadius: '8px',
     border: '1px solid #e5e7eb',
   },
@@ -1215,9 +1215,6 @@ const styles = {
   trHead: {
     background: '#f1f5f9',
     textAlign: 'left',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
   },
   th: { padding: '12px 14px', fontSize: '0.78rem', fontWeight: '700', color: '#374151', letterSpacing: '0.5px', whiteSpace: 'nowrap' },
   trBody: { borderBottom: '1px solid #f3f4f6', background: 'white', transition: 'background 0.15s' },
@@ -1233,7 +1230,14 @@ const styles = {
     display: 'flex', alignItems: 'center', fontSize: '0.9rem',
     transition: 'background 0.15s',
   },
-  pagination: { display: 'flex', alignItems: 'center', gap: '6px', marginTop: '1rem', justifyContent: 'flex-end', flexWrap: 'wrap' },
+  pagination: { 
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '6px', 
+    marginTop: '1rem', 
+    justifyContent: 'flex-end', 
+    flexWrap: 'wrap' 
+  },
   pageBtn: { background: 'white', border: '1px solid #e5e7eb', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center' },
   pageBtnActive: { background: '#1e3a8a', color: 'white', borderColor: '#1e3a8a' },
   pageBtnText: {
@@ -1255,7 +1259,6 @@ const styles = {
   fieldIcon: { position: 'absolute', left: '10px', color: '#9ca3af', fontSize: '0.95rem', display: 'flex', alignItems: 'center' },
   modalInput: { width: '100%', padding: '10px 10px 10px 34px', border: '1.5px solid #e5e7eb', borderRadius: '8px', boxSizing: 'border-box', fontSize: '0.9rem', background: '#f9fafb' },
   modalFooter: { display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f3f4f6' },
-  btnCancel: { background: '#9ca3af', color: 'white', border: 'none', padding: '10px 22px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' },
   btnSave: { background: '#1e3a8a', color: 'white', border: 'none', padding: '10px 22px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' },
   errorBox: { background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '8px', padding: '10px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', marginBottom: '1rem' },
   footer: {
